@@ -1,0 +1,281 @@
+/*
+-ABDELMAJID ELMONTASSIR
+-MOHAMED AHMAIMOU
+-2AP-G2
+-Gestion de Stock
+*/
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#define MAX_PRODUCTS 50
+#define FILENAME "products.csv"
+
+typedef struct {
+    int    id;
+    char   name[30];
+    char   description[50];
+    char   username[60];
+    float  price;
+    int    quantity;
+    int    alert_threshold;
+    char   last_entry_date[20];
+    char   last_exit_date[20];
+} Product;
+
+Product products[MAX_PRODUCTS];
+int product_count = 0;
+
+void save_products_to_file() {
+    FILE *file = fopen(FILENAME, "w");
+    if (file == NULL) {
+        printf("Erreur lors de l'ouverture du fichier.\n");
+        return;
+    }
+
+    fprintf(file, "ID,Name,Description,Username,Price,Quantity,Alert_Threshold,Last_Entry_Date,Last_Exit_Date\n");
+    for (int i = 0; i < product_count; i++) {
+        fprintf(file, "%d,%s,%s,%s,%.2f,%d,%d,%s,%s\n",
+            products[i].id, products[i].name, products[i].description,
+            products[i].username, products[i].price, products[i].quantity,
+            products[i].alert_threshold, products[i].last_entry_date,
+            products[i].last_exit_date);
+    }
+
+    fclose(file);
+}
+
+void search_product_by_name(char *name) {
+    printf("\nID | Name | Description | Username | Price | Quantity | Alert Threshold | Last Entry Date | Last Exit Date\n");
+    for (int i = 0; i < product_count; i++) {
+        if (strcmp(products[i].name, name) == 0) {
+            printf("%d | %s | %s | %s | %.2f | %d | %d | %s | %s\n",
+                products[i].id, products[i].name, products[i].description,
+                products[i].username, products[i].price, products[i].quantity,
+                products[i].alert_threshold, products[i].last_entry_date,
+                products[i].last_exit_date);
+        }
+    }
+}
+
+void search_product_by_username(char *username) {
+    printf("\nID | Name | Description | Username | Price | Quantity | Alert Threshold | Last Entry Date | Last Exit Date\n");
+    for (int i = 0; i < product_count; i++) {
+        if (strcmp(products[i].username, username) == 0) {
+            printf("%d | %s | %s | %s | %.2f | %d | %d | %s | %s\n",
+                products[i].id, products[i].name, products[i].description,
+                products[i].username, products[i].price, products[i].quantity,
+                products[i].alert_threshold, products[i].last_entry_date,
+                products[i].last_exit_date);
+        }
+    }
+}
+
+void sort_products_by_price() {
+    for (int i = 0; i < product_count - 1; i++) {
+        for (int j = i + 1; j < product_count; j++) {
+            if (products[i].price > products[j].price) {
+                Product temp = products[i];
+                products[i] = products[j];
+                products[j] = temp;
+            }
+        }
+    }
+}
+
+void addProduct() {
+    if (product_count >= MAX_PRODUCTS) {
+        printf("La limite de produits a été atteinte. Impossible d'ajouter plus de produits.\n");
+        return;
+    }
+
+    Product newProduct;
+    newProduct.id = product_count + 1;
+    printf("Entrez le nom du produit : ");
+    fgets(newProduct.name, sizeof(newProduct.name), stdin);
+    strtok(newProduct.name, "\n");
+
+    printf("Entrez la description du produit : ");
+    fgets(newProduct.description, sizeof(newProduct.description), stdin);
+    strtok(newProduct.description, "\n");
+
+    printf("Entrez le nom de l'utilisateur : ");
+    fgets(newProduct.username, sizeof(newProduct.username), stdin);
+    strtok(newProduct.username, "\n");
+
+    printf("Entrez le prix du produit : ");
+    scanf("%f", &newProduct.price);
+    getchar();
+
+    printf("Entrez la quantité en stock : ");
+    scanf("%d", &newProduct.quantity);
+    getchar();
+
+    printf("Entrez le seuil d'alerte de stock : ");
+    scanf("%d", &newProduct.alert_threshold);
+    getchar();
+
+    time_t currentTime = time(NULL);
+    strftime(newProduct.last_entry_date, sizeof(newProduct.last_entry_date), "%Y-%m-%d %H:%M:%S", localtime(&currentTime));
+    strcpy(newProduct.last_exit_date, "N/A");
+
+    products[product_count++] = newProduct;
+
+    printf("Le produit a été ajouté avec succès.\n");
+}
+
+void editProduct() {
+    int id;
+    printf("Entrez l'ID du produit à modifier : ");
+    scanf("%d", &id);
+    getchar();
+
+    int found = 0;
+    for (int i = 0; i < product_count; i++) {
+        if (products[i].id == id) {
+            printf("Nouveau nom du produit : ");
+            fgets(products[i].name, sizeof(products[i].name), stdin);
+            strtok(products[i].name, "\n");
+
+            printf("Nouvelle description du produit : ");
+            fgets(products[i].description, sizeof(products[i].description), stdin);
+            strtok(products[i].description, "\n");
+
+            printf("Nouveau nom de l'utilisateur : ");
+            fgets(products[i].username, sizeof(products[i].username), stdin);
+            strtok(products[i].username, "\n");
+
+            printf("Nouveau prix du produit : ");
+            scanf("%f", &products[i].price);
+            getchar();
+
+            printf("Nouvelle quantité en stock : ");
+            scanf("%d", &products[i].quantity);
+            getchar();
+
+            printf("Nouveau seuil d'alerte de stock : ");
+            scanf("%d", &products[i].alert_threshold);
+            getchar();
+
+            printf("Le produit a été modifié avec succès.\n");
+            found = 1;
+            break;
+        }
+    }
+
+    if (!found) {
+        printf("Produit non trouvé. Veuillez entrer un ID valide.\n");
+    }
+}
+
+void deleteProduct() {
+    int id;
+    printf("Entrez l'ID du produit à supprimer : ");
+    scanf("%d", &id);
+    getchar();
+    int found = 0;
+    for (int i = 0; i < product_count; i++) {
+        if (products[i].id == id) {
+            for (int j = i; j < product_count - 1; j++) {
+                products[j] = products[j + 1];
+            }
+            product_count--;
+            printf("Le produit a été supprimé avec succès.\n");
+            found = 1;
+            break;
+        }
+    }
+
+    if (!found) {
+        printf("Produit non trouvé. Veuillez entrer un ID valide.\n");
+    }
+}
+
+void displayProducts() {
+    if (product_count == 0) {
+        printf("Aucun produit n'est disponible pour l'affichage.\n");
+        return;
+    }
+
+    printf("\nListe des produits :\n");
+    printf("---------------------------------------------------------------------------------------------------------\n");
+    printf("ID\tNom\tDescription\tUtilisateur\tPrix\tQuantite en stock\tSeuil d'alerte\tDate derniere entree\tDate derniere sortie\n");
+    printf("---------------------------------------------------------------------------------------------------------\n");
+    for (int i = 0; i < product_count; i++) {
+        printf("%d\t%s\t%s\t%s\t%.2f\t%d\t%d\t%s\t%s\n", products[i].id, products[i].name, products[i].description, products[i].username, products[i].price, products[i].quantity, products[i].alert_threshold, products[i].last_entry_date, products[i].last_exit_date);
+    }
+    printf("---------------------------------------------------------------------------------------------------------\n");
+}
+
+int main() {
+    char userName[30];
+
+    printf("Entrez votre nom : ");
+    fgets(userName, sizeof(userName), stdin);
+    strtok(userName, "\n");
+
+    while (1) {
+        printf("\nMenu principal :\n");
+        printf("1. Ajouter un produit\n");
+        printf("2. Modifier un produit\n");
+        printf("3. Supprimer un produit\n");
+        printf("4. Afficher la liste des produits\n");
+        printf("5. Enregistrer les produits dans un fichier\n");
+        printf("6. Rechercher un produit par nom\n");
+        printf("7. Rechercher un produit par nom d'utilisateur\n");
+        printf("8. Trier les produits par prix\n");
+        printf("9. Quitter\n");
+        printf("Choix : ");
+
+        int choice;
+        scanf("%d", &choice);
+        getchar(); // Capture le caractère de nouvelle ligne
+
+        switch (choice) {
+            case 1:
+                addProduct();
+                break;
+            case 2:
+                editProduct();
+                break;
+            case 3:
+                deleteProduct();
+                break;
+            case 4:
+                displayProducts();
+                break;
+            case 5:
+                save_products_to_file();
+                break;
+            case 6: {
+                char name[30];
+                printf("Entrez le nom du produit à rechercher : ");
+                fgets(name, sizeof(name), stdin);
+                strtok(name, "\n");
+                search_product_by_name(name);
+                break;
+            }
+            case 7: {
+                char username[60];
+                printf("Entrez le nom d'utilisateur à rechercher : ");
+                fgets(username, sizeof(username), stdin);
+                strtok(username, "\n");
+                search_product_by_username(username);
+                break;
+            }
+            case 8:
+                sort_products_by_price();
+                printf("Les produits ont été triés par prix.\n");
+                break;
+            case 9:
+                printf("Au revoir, %s !\n", userName);
+                exit(0);
+            default:
+                printf("Choix invalide. Veuillez choisir une option valide.\n");
+        }
+    }
+
+    return 0;
+}
+
